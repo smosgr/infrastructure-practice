@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: greeter
+spec:
+  selector:
+    matchLabels:
+      app: greeter
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: greeter
+        env: production
+    spec:
+      containers:
+      - image: greeter:latest
+        imagePullPolicy: IfNotPresent
+        name: server
+        env:
+          - name: PODNAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: greeter
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: greeter
+    env: production
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: greeter
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: greeter
+            port:
+              number: 8080
+        path: /
+        pathType: ImplementationSpecific
